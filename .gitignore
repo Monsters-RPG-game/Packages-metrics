@@ -22,9 +22,6 @@ tsconfig.tsbuildinfo
 yarn-debug.log*
 yarn-error.log*
 
-# Compiled code
-lib
-
 # Tsconfig cache
 tsconfig.tsbuildinfo
 tsconfig.release.tsbuildinfo
