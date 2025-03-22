@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# VS Code
+.vscode
+!.vscode/tasks.js
+
+# JetBrains IDEs
+.idea/
+
+# Optional npm cache directory
+.npm
+yarn.lock
+tsconfig.tsbuildinfo
+
+# Optional eslint cache
+.eslintcache
+
+# Misc
+.DS_Store
+
+yarn-debug.log*
+yarn-error.log*
+
+# Compiled code
+lib
+
+# Tsconfig cache
+tsconfig.tsbuildinfo
+tsconfig.release.tsbuildinfo
