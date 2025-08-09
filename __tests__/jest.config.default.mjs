@@ -1,8 +1,6 @@
-import type { JestConfigWithTsJest } from 'ts-jest';
-
-const config: JestConfigWithTsJest = {
+const config = {
   verbose: true,
-  moduleDirectories: ['node_modules', 'src', "__tests__", __dirname],
+  moduleDirectories: ['node_modules', 'src', "__tests__"],
   moduleFileExtensions: ['js', 'ts', 'json'],
   testPathIgnorePatterns: ['build'],
   extensionsToTreatAsEsm: ['.ts'],

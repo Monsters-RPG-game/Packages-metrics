@@ -1,0 +1,197 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+
+    container:
+      image: node:22
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-node-
+
+      - name: Install dependencies
+        run: npm install
+
+  setup-config:
+    needs: install
+    runs-on: ubuntu-latest
+
+    container:
+      image: node:22
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup config files
+        run: |
+          cp config/exampleConfig.json config/prodConfig.json
+          cp config/exampleConfig.json config/devConfig.json
+          cp config/exampleConfig.json config/testConfig.json
+
+      - name: Upload config
+        uses: actions/upload-artifact@v3
+        env:
+          NODE_TLS_REJECT_UNAUTHORIZED: '0'
+        with:
+          name: config
+          path: config/
+
+  test:
+    needs: [setup-config]
+    runs-on: ubuntu-latest
+
+    container:
+      image: node:22
+
+    services:
+      mongodb:
+        image: mongo:8
+        env:
+          MONGO_INITDB_ROOT_USERNAME: user
+          MONGO_INITDB_ROOT_PASSWORD: password
+          MONGO_INITDB_DATABASE: users-test
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' --username user --password password --authenticationDatabase admin"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-node-
+
+      - name: Download config
+        uses: actions/download-artifact@v3
+        env:
+          NODE_TLS_REJECT_UNAUTHORIZED: '0'
+        with:
+          name: config
+          path: config/
+
+      - name: Run tests
+        run: |
+          echo "Ls"
+          ls
+          echo "Ls tests"
+          ls __tests__
+          echo "Tests"
+          npm run test:e2e
+          npm run test:unit
+          npm run test:db
+
+  lint:
+    needs: [setup-config]
+    runs-on: ubuntu-latest
+
+    container:
+      image: node:22
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-node-
+
+      - name: Download config
+        uses: actions/download-artifact@v3
+        env:
+          NODE_TLS_REJECT_UNAUTHORIZED: '0'
+        with:
+          name: config
+          path: config/
+
+      - name: Lint
+        run: npm install && npm run lint
+
+  build:
+    needs: [setup-config, test, lint]
+
+    runs-on: ubuntu-latest
+
+    container:
+      image: node:22
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-node-
+
+      - name: Download config
+        uses: actions/download-artifact@v3
+        env:
+          NODE_TLS_REJECT_UNAUTHORIZED: '0'
+        with:
+          name: config
+          path: config/
+
+      - name: Build
+        run: npm install && npm run build
+
+  audit:
+    needs: [test, lint]
+
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    container:
+      image: node:22
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-node-
+
+      - name: Audit
+        run: npm install && npm audit

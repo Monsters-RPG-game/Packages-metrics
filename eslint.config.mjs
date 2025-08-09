@@ -91,7 +91,7 @@ export default [
       'check-file/folder-match-with-fex': [
         2,
         {
-          '*.test.{js,ts}': '**/__tests__/**',
+          '*.test.{js,ts,mjs}': '**/__tests__/**',
         },
       ],
 
